@@ -6,9 +6,11 @@ class Engine {
   constructor() {
     this.scene = new THREE.Scene()
 
-    //this.camera = new THREE.PerspectiveCamera( 75, 0, 1, 1000 )
+    // this.camera = new THREE.PerspectiveCamera( 75, 1000, 1, 1000 )
+    // this.camera.position.z = 100
 
-    this.camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 10000 )
+    this.camera = new THREE.PerspectiveCamera(100, window.innerWidth / window.innerHeight, 0.1, 10000 )
+    //this.camera.position.z = 20
     this.camera.position.set = (0, 0, 7)
     this.camera.lookAt(this.scene.position)
     this.scene.add(this.camera)
@@ -21,7 +23,7 @@ class Engine {
 
     this.dom = this.renderer.domElement
 
-    this.controls = new THREE.OrbitControls( this.camera, this.dom );
+    //this.controls = new THREE.OrbitControls( this.camera, this.dom );
 
     this._binds = {}
     this._binds.onUpdate = this._onUpdate.bind( this )
@@ -36,6 +38,7 @@ class Engine {
     var seconds   = Date.now() / 1000;
     var radius    = 0.70;
     var angle   = Math.sin(0.75 * seconds * Math.PI) / 4;
+
     //angle = (seconds*Math.PI)/4;
     this.camera.position.x = Math.cos(angle - Math.PI/2) * radius;
     this.camera.position.y = Math.sin(angle - Math.PI/2) * radius;
