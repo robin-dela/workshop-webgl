@@ -167,7 +167,8 @@ var webgl = undefined,
 
     setupAudioNodes();
     loadSound(pathSound);
-    //webgl.render(average, frequencys);
+    isLaunch = 1;
+    webgl.render(average, frequencys);
 });
 
 function resizeHandler() {
@@ -318,7 +319,6 @@ var Tunnel = (function (_THREE$Object3D) {
     this.texture;
     this.lightGlobal;
     this.lightTop;
-    this.magicLight;
     this.createTunnel();
   }
 
@@ -350,18 +350,11 @@ var Tunnel = (function (_THREE$Object3D) {
       this.lightGlobal = new _three2['default'].PointLight(0x00796F, 20, 30);
       this.lightGlobal.position.set(1, 3, 0);
       this.add(this.lightGlobal);
-
-      // Add light in the tube
-      this.magicLight = new _three2['default'].PointLight(0xe74c3c, 20, 30);
-      this.magicLight.position.set(1, 3, 0);
-      this.add(this.magicLight);
     }
   }, {
     key: 'update',
     value: function update(average, frequencys) {
       var maxIntensity = 35;
-
-      this.magicLight.intensity = 20;
 
       this.texture.offset.y -= 0.006;
       this.texture.offset.y %= 1;

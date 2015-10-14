@@ -20,22 +20,27 @@ export default class Webgl {
     this.renderer.setClearColor(0x000000);
 
     this.usePostprocessing = false;
-    this.composer = new WAGNER.Composer(this.renderer);
-    this.composer.setSize(width, height);
-    this.initPostprocessing();
+    //this.composer = new WAGNER.Composer(this.renderer);
+    //this.composer.setSize(width, height);
+    //this.initPostprocessing();
 
     this.tunnel = new Tunnel();
     this.tunnel.position.set(0, 0, 0);
     this.scene.add(this.tunnel);
 
-    this.dom = this.renderer.domElement
+    this.dom = this.renderer.domElement;
     this.controls = new THREE.OrbitControls( this.camera, this.dom );
+
+    this.shaderTime = 0;
+    this.mirrorParams;
+    this.mirrorPass;
+    this.composer;
   }
 
   initPostprocessing() {
     if (!this.usePostprocessing) return;
 
-    this.vignette2Pass = new WAGNER.Vignette2Pass();
+    //this.vignette2Pass = new WAGNER.Vignette2Pass();
   }
 
   resize(width, height) {
@@ -49,11 +54,19 @@ export default class Webgl {
 
   render(average, frequencys) {
     if (this.usePostprocessing) {
-      this.composer.reset();
-      this.composer.renderer.clear();
-      this.composer.render(this.scene, this.camera);
-      this.composer.pass(this.vignette2Pass);
-      this.composer.toScreen();
+      //this.composer.reset();
+      //this.composer.renderer.clear();
+      // this.composer.render(this.scene, this.camera);
+      // this.composer.pass(this.vignette2Pass);
+      // this.composer.toScreen();
+
+      this.renderPass = new THREE.RenderPass( this.scene, this.camera );
+      this.mirrorPass = new THREE.ShaderPass( THREE.MirrorShader );
+      this.composer = new THREE.EffectComposer( this.renderer);
+      this.composer.addPass( this.renderPass );
+      this.composer.addPass( this.mirrorPass );
+      this.mirrorPass.renderToScreen = true;
+
     } else {
       this.renderer.autoClear = false;
       this.renderer.clear();

@@ -33,8 +33,7 @@ domready(() => {
 
   setupAudioNodes();
   loadSound(pathSound);
-  isLaunch = 1;
-  webgl.render(average, frequencys);
+  //webgl.render(average, frequencys);
 });
 
 function resizeHandler() {

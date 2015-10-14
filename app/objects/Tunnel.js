@@ -9,6 +9,7 @@ export default class Tunnel extends THREE.Object3D {
     this.texture;
     this.lightGlobal;
     this.lightTop;
+    this.magicLight;
     this.createTunnel();
   }
 
@@ -39,10 +40,17 @@ export default class Tunnel extends THREE.Object3D {
     this.lightGlobal.position.set( 1, 3, 0 );
     this.add( this.lightGlobal );
 
+    // Add light in the tube
+    this.magicLight = new THREE.PointLight( 0xe74c3c, 20, 30 );
+    this.magicLight.position.set( 1, 3, 0 );
+    this.add( this.magicLight );
+
   }
 
   update(average, frequencys) {
     var maxIntensity = 35;
+
+    this.magicLight.intensity = 20;
 
     this.texture.offset.y  -= 0.006;
     this.texture.offset.y  %= 1;
