@@ -4,6 +4,7 @@ var plumber = require( "gulp-plumber" );
 
 var browserify = require( "browserify" );
 var babelify = require( "babelify" );
+var glslify = require( "glslify" );
 var watchify = require( "watchify" );
 var source = require( "vinyl-source-stream" );
 
@@ -27,6 +28,7 @@ function create( isBuild ) {
 
   var b = browserify( paths.scripts + "main.js", watchify.args );
   b.transform( babelify );
+  b.transform( glslify );
 
   w = watchify( b, { poll: true } );
   w.on( "update", bundle );

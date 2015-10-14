@@ -1,3 +1,5 @@
+const glslify = require('glslify');
+
 class Xp extends THREE.Object3D {
 
   constructor() {
@@ -11,15 +13,15 @@ class Xp extends THREE.Object3D {
     this.magicLight
 
 
-    this.BEAT_HOLD_TIME = 40; //num of frames to hold a beat
-    this.BEAT_DECAY_RATE = 0.98;
-    this.BEAT_MIN = 0.2; //a volume less than this is no beat
-    this.beatCutOff = 0;
-    this.beatTime = 0;
-    this.beatHoldTime = 20
-    this.beatDecayRate = 0.8
+    // this.BEAT_HOLD_TIME = 40; //num of frames to hold a beat
+    // this.BEAT_DECAY_RATE = 0.98;
+    // this.BEAT_MIN = 0.2; //a volume less than this is no beat
+    // this.beatCutOff = 0;
+    // this.beatTime = 0;
+    // this.beatHoldTime = 20
+    // this.beatDecayRate = 0.8
 
-    this.gui = new dat.GUI();
+    //this.gui = new dat.GUI();
    // this.guiInit()
   }
 
@@ -29,7 +31,31 @@ class Xp extends THREE.Object3D {
     this.texture   = THREE.ImageUtils.loadTexture( "imgs/water.jpg" );
     this.texture.wrapT = THREE.RepeatWrapping;
     this.material  = new THREE.MeshLambertMaterial({color : 0xFFFFFF, map : this.texture, side: THREE.DoubleSide});
-
+    // this.material  = new THREE.ShaderMaterial({
+    //   uniforms: {
+    //     resolution: {
+    //       type: 'v2',
+    //       value: new THREE.Vector2(window.innerWidth, window.innerHeight)
+    //     },
+    //     color1 : {
+    //       type : 'c',
+    //       value : new THREE.Color(0xffffff)
+    //     },
+    //     color2 : {
+    //       type : 'c',
+    //       value : new THREE.Color(0x000000)
+    //     },
+    //     amount : {
+    //       type : 'f',
+    //       value : 5,
+    //       min : 1, // only used for dat.gui, not needed for production
+    //       max : 100 // only used for dat.gui, not needed for production
+    //     },
+    //   },
+    //   vertexShader: glslify('../shaders/tunnel-vert.glsl'),
+    //   fragmentShader: glslify('../shaders/tunnel-frag.glsl'),
+    //   side: THREE.DoubleSide
+    // });
 
     this.tunnel  = new THREE.Mesh( this.geometry, this.material );
     this.tunnel.rotation.x = Math.PI/2;
@@ -41,17 +67,17 @@ class Xp extends THREE.Object3D {
     // var lightOne = new THREE.DirectionalLight( 0x006159, 1.5 );
     // lightOne.position.set( 1, 1, 0 ).normalize();
     // this.add( lightOne );
-    
+    //
     // var lightTwo = new THREE.DirectionalLight( 0x006159, 1.5 );
     // lightTwo.position.set( -1, 1, 0 ).normalize();
     // this.add( lightTwo );
-    
+
     this.lightTop = new THREE.PointLight( 0x009589, 15, 25 );
     this.lightTop.position.set( 0, -3, 0 );
     this.add( this.lightTop );
-    
+
     this.lightGlobal = new THREE.PointLight( 0x00796F, 20, 30 );
-    this.lightGlobal.position.set( 3, 3, 0 );
+    this.lightGlobal.position.set( 1, 3, 0 );
     this.add( this.lightGlobal );
 
     //this.magicLight = new THREE.AmbientLight(0xE67E22);
@@ -75,7 +101,7 @@ class Xp extends THREE.Object3D {
     //geometry.vertices.shift();
 
     //this.add(this.circle);
-    
+
   }
 
   guiInit() {
@@ -113,27 +139,27 @@ class Xp extends THREE.Object3D {
     //this.texture.offset.y  -= avg / 100000;
 
     // for beat
-    if (avg  > this.beatCutOff && avg > this.BEAT_MIN){
-      this.beatCutOff = avg *1.1;
-      this.beatTime = 0;
-    } else{
-      if (this.beatTime <= this.beatHoldTime){
-        this.beatTime ++;
-      } else{
-        this.beatCutOff *= this.beatDecayRate;
-        this.beatCutOff = Math.max(this.beatCutOff, this.BEAT_MIN);
-      }
-    }
+    // if (avg  > this.beatCutOff && avg > this.BEAT_MIN){
+    //   this.beatCutOff = avg *1.1;
+    //   this.beatTime = 0;
+    // } else{
+    //   if (this.beatTime <= this.beatHoldTime){
+    //     this.beatTime ++;
+    //   } else{
+    //     this.beatCutOff *= this.beatDecayRate;
+    //     this.beatCutOff = Math.max(this.beatCutOff, this.BEAT_MIN);
+    //   }
+    // }
 
 
     // for wave // from 0 -256, no sound = 128
-    n = data.time 
+    n = data.time
     for( i = 0; i < n.length; i++ ) {
       total += n[i]
     }
     avg = total / n.length
-    this.lightTop.intensity = avg/40;
-    this.lightGlobal.intensity = avg/40;
+    this.lightTop.intensity = avg/20;
+    this.lightGlobal.intensity = avg/20;
     //this.texture.offset.y  -= avg / 40000;
 
     //this.magicLight.intensity = avg/10;

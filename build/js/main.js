@@ -14,8 +14,14 @@ var Engine = (function () {
 
     this.scene = new THREE.Scene();
 
-    // this.camera = new THREE.PerspectiveCamera( 75, 1000, 1, 1000 )
-    // this.camera.position.z = 100
+    this.shaderTime = 0;
+    this.mirrorParams;
+    this.mirrorPass;
+    this.composer;
+    this.camera;
+
+    //this.camera = new THREE.PerspectiveCamera( 75, 1000, 1, 1000 )
+    //this.camera.position.z = 40
 
     this.camera = new THREE.PerspectiveCamera(100, window.innerWidth / window.innerHeight, 0.1, 10000);
     //this.camera.position.z = 20
@@ -25,20 +31,47 @@ var Engine = (function () {
 
     this.scene.fog = new THREE.FogExp2(0x000000, 0.15);
 
-    this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    this.renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true });
     this.renderer.setPixelRatio(window.devicePixelRatio);
     this.renderer.setClearColor(0x000000);
 
     this.dom = this.renderer.domElement;
 
-    //this.controls = new THREE.OrbitControls( this.camera, this.dom );
+    this.controls = new THREE.OrbitControls(this.camera, this.dom);
 
     this._binds = {};
     this._binds.onUpdate = this._onUpdate.bind(this);
     this._binds.onResize = this._onResize.bind(this);
+
+    this.post = {
+      renderPass: true,
+      mirrorPass: true
+    };
+
+    this.gui = new dat.GUI();
+    this.gui.add(this.post, 'renderPass');
+    this.gui.add(this.post, 'mirrorPass');
+
+    //this.postprocessing()
   }
 
   _createClass(Engine, [{
+    key: "postprocessing",
+    value: function postprocessing() {
+      //POST PROCESSING
+      //render pass renders scene into effects composer
+      this.renderPass = new THREE.RenderPass(this.scene, this.camera);
+      this.mirrorPass = new THREE.ShaderPass(THREE.MirrorShader);
+
+      //Add Shader Passes to Composer
+      this.composer = new THREE.EffectComposer(this.renderer);
+      if (this.post.renderPass) this.composer.addPass(this.renderPass);
+      if (this.post.mirrorPass) this.composer.addPass(this.mirrorPass);
+
+      //set last pass in composer chain to renderToScreen
+      this.mirrorPass.renderToScreen = true;
+    }
+  }, {
     key: "_onUpdate",
     value: function _onUpdate() {
       this.renderer.render(this.scene, this.camera);
@@ -52,6 +85,10 @@ var Engine = (function () {
       this.camera.position.x = Math.cos(angle - Math.PI / 2) * radius;
       this.camera.position.y = Math.sin(angle - Math.PI / 2) * radius;
       this.camera.rotation.z = angle;
+
+      //this.composer.reset();
+
+      //this.composer.render( 0.1);
     }
   }, {
     key: "_onResize",
@@ -326,15 +363,17 @@ sound.on("start", function () {
 loop.start();
 
 },{"core/engine":1,"core/loop":2,"core/sound":3,"core/stage":4,"xp/Xp":6}],6:[function(require,module,exports){
-"use strict";
+'use strict';
 
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
-var _get = function get(_x, _x2, _x3) { var _again = true; _function: while (_again) { var object = _x, property = _x2, receiver = _x3; desc = parent = getter = undefined; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x = parent; _x2 = property; _x3 = receiver; _again = true; continue _function; } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
+var _get = function get(_x, _x2, _x3) { var _again = true; _function: while (_again) { var object = _x, property = _x2, receiver = _x3; desc = parent = getter = undefined; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x = parent; _x2 = property; _x3 = receiver; _again = true; continue _function; } } else if ('value' in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+function _inherits(subClass, superClass) { if (typeof superClass !== 'function' && superClass !== null) { throw new TypeError('Super expression must either be null or a function, not ' + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+
 
 var Xp = (function (_THREE$Object3D) {
   _inherits(Xp, _THREE$Object3D);
@@ -342,7 +381,7 @@ var Xp = (function (_THREE$Object3D) {
   function Xp() {
     _classCallCheck(this, Xp);
 
-    _get(Object.getPrototypeOf(Xp.prototype), "constructor", this).call(this);
+    _get(Object.getPrototypeOf(Xp.prototype), 'constructor', this).call(this);
 
     this._createTunnel();
     this.sphere;
@@ -351,26 +390,51 @@ var Xp = (function (_THREE$Object3D) {
     this.lightTop;
     this.magicLight;
 
-    this.BEAT_HOLD_TIME = 40; //num of frames to hold a beat
-    this.BEAT_DECAY_RATE = 0.98;
-    this.BEAT_MIN = 0.2; //a volume less than this is no beat
-    this.beatCutOff = 0;
-    this.beatTime = 0;
-    this.beatHoldTime = 20;
-    this.beatDecayRate = 0.8;
+    // this.BEAT_HOLD_TIME = 40; //num of frames to hold a beat
+    // this.BEAT_DECAY_RATE = 0.98;
+    // this.BEAT_MIN = 0.2; //a volume less than this is no beat
+    // this.beatCutOff = 0;
+    // this.beatTime = 0;
+    // this.beatHoldTime = 20
+    // this.beatDecayRate = 0.8
 
-    this.gui = new dat.GUI();
+    //this.gui = new dat.GUI();
     // this.guiInit()
   }
 
   _createClass(Xp, [{
-    key: "_createTunnel",
+    key: '_createTunnel',
     value: function _createTunnel() {
 
       this.geometry = new THREE.CylinderGeometry(1, 1, 30, 32, 1, true);
       this.texture = THREE.ImageUtils.loadTexture("imgs/water.jpg");
       this.texture.wrapT = THREE.RepeatWrapping;
       this.material = new THREE.MeshLambertMaterial({ color: 0xFFFFFF, map: this.texture, side: THREE.DoubleSide });
+      // this.material  = new THREE.ShaderMaterial({
+      //   uniforms: {
+      //     resolution: {
+      //       type: 'v2',
+      //       value: new THREE.Vector2(window.innerWidth, window.innerHeight)
+      //     },
+      //     color1 : {
+      //       type : 'c',
+      //       value : new THREE.Color(0xffffff)
+      //     },
+      //     color2 : {
+      //       type : 'c',
+      //       value : new THREE.Color(0x000000)
+      //     },
+      //     amount : {
+      //       type : 'f',
+      //       value : 5,
+      //       min : 1, // only used for dat.gui, not needed for production
+      //       max : 100 // only used for dat.gui, not needed for production
+      //     },
+      //   },
+      //   vertexShader: glslify('../shaders/tunnel-vert.glsl'),
+      //   fragmentShader: glslify('../shaders/tunnel-frag.glsl'),
+      //   side: THREE.DoubleSide
+      // });
 
       this.tunnel = new THREE.Mesh(this.geometry, this.material);
       this.tunnel.rotation.x = Math.PI / 2;
@@ -382,7 +446,7 @@ var Xp = (function (_THREE$Object3D) {
       // var lightOne = new THREE.DirectionalLight( 0x006159, 1.5 );
       // lightOne.position.set( 1, 1, 0 ).normalize();
       // this.add( lightOne );
-
+      //
       // var lightTwo = new THREE.DirectionalLight( 0x006159, 1.5 );
       // lightTwo.position.set( -1, 1, 0 ).normalize();
       // this.add( lightTwo );
@@ -392,7 +456,7 @@ var Xp = (function (_THREE$Object3D) {
       this.add(this.lightTop);
 
       this.lightGlobal = new THREE.PointLight(0x00796F, 20, 30);
-      this.lightGlobal.position.set(3, 3, 0);
+      this.lightGlobal.position.set(1, 3, 0);
       this.add(this.lightGlobal);
 
       //this.magicLight = new THREE.AmbientLight(0xE67E22);
@@ -417,7 +481,7 @@ var Xp = (function (_THREE$Object3D) {
       //this.add(this.circle);
     }
   }, {
-    key: "guiInit",
+    key: 'guiInit',
     value: function guiInit() {
       this.sphere.position.z = 7;
       this.circle.position.z = 7;
@@ -425,7 +489,7 @@ var Xp = (function (_THREE$Object3D) {
       //this.gui.add(this.circle.position, 'z', -70, 70);
     }
   }, {
-    key: "update",
+    key: 'update',
     value: function update(data) {
       if (!data) {
         return;
@@ -453,17 +517,17 @@ var Xp = (function (_THREE$Object3D) {
       //this.texture.offset.y  -= avg / 100000;
 
       // for beat
-      if (avg > this.beatCutOff && avg > this.BEAT_MIN) {
-        this.beatCutOff = avg * 1.1;
-        this.beatTime = 0;
-      } else {
-        if (this.beatTime <= this.beatHoldTime) {
-          this.beatTime++;
-        } else {
-          this.beatCutOff *= this.beatDecayRate;
-          this.beatCutOff = Math.max(this.beatCutOff, this.BEAT_MIN);
-        }
-      }
+      // if (avg  > this.beatCutOff && avg > this.BEAT_MIN){
+      //   this.beatCutOff = avg *1.1;
+      //   this.beatTime = 0;
+      // } else{
+      //   if (this.beatTime <= this.beatHoldTime){
+      //     this.beatTime ++;
+      //   } else{
+      //     this.beatCutOff *= this.beatDecayRate;
+      //     this.beatCutOff = Math.max(this.beatCutOff, this.BEAT_MIN);
+      //   }
+      // }
 
       // for wave // from 0 -256, no sound = 128
       n = data.time;
@@ -471,8 +535,8 @@ var Xp = (function (_THREE$Object3D) {
         total += n[i];
       }
       avg = total / n.length;
-      this.lightTop.intensity = avg / 40;
-      this.lightGlobal.intensity = avg / 40;
+      this.lightTop.intensity = avg / 20;
+      this.lightGlobal.intensity = avg / 20;
       //this.texture.offset.y  -= avg / 40000;
 
       //this.magicLight.intensity = avg/10;
