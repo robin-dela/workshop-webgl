@@ -21,3 +21,6 @@ npm run build
 ```
 
 You are good to go !
+
+
+Thanks to [Valentin](https://twitter.com/vdaguenet) for the starter kit ! 
