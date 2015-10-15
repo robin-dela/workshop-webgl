@@ -4,7 +4,6 @@ import domready from 'domready';
 import Webgl from './Webgl';
 import raf from 'raf';
 import dat from 'dat-gui';
-import 'gsap';
 
 let webgl,
     gui,
@@ -64,10 +63,9 @@ function resizeHandler() {
 }
 
 function animate() {
-  var test = raf(animate);
-  var click = false;
-
+  raf(animate);
   // Play Pause in konami code / Don't work
+  //var click = false;
   // $('.play').on('click', function(){
   //   if (!click) {
   //     raf.cancel(test);
