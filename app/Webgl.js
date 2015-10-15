@@ -6,41 +6,47 @@ window.THREE = THREE;
 
 export default class Webgl {
   constructor(width, height) {
+
     this.scene = new THREE.Scene();
 
+    // Set up camera
     this.camera = new THREE.PerspectiveCamera(100, width / height, 0.1, 10000 );
     this.camera.position.set = (0, 0, 7);
     this.camera.lookAt(this.scene.position);
     this.scene.add(this.camera);
 
+    // Add fog in the end of the tunnel
     this.scene.fog = new THREE.FogExp2( 0x000000, 0.15 );
 
     this.renderer = new THREE.WebGLRenderer({antialias: true, alpha: true});
     this.renderer.setSize(width, height);
     this.renderer.setClearColor(0x000000);
 
-    this.usePostprocessing = false;
-    //this.composer = new WAGNER.Composer(this.renderer);
-    //this.composer.setSize(width, height);
-    //this.initPostprocessing();
+    // Use post processing to look like toon
+    this.usePostprocessing = true;
+    this.toon = true;
+    this.invert = false;
+    this.grayscale = false;
+    this.composer = new WAGNER.Composer(this.renderer);
+    this.composer.setSize(width, height);
+    this.initPostprocessing();
 
+    // Load tunnel
     this.tunnel = new Tunnel();
     this.tunnel.position.set(0, 0, 0);
     this.scene.add(this.tunnel);
 
-    this.dom = this.renderer.domElement;
-    this.controls = new THREE.OrbitControls( this.camera, this.dom );
-
-    this.shaderTime = 0;
-    this.mirrorParams;
-    this.mirrorPass;
-    this.composer;
+    // this.dom = this.renderer.domElement;
+    // this.controls = new THREE.OrbitControls( this.camera, this.dom );
   }
 
   initPostprocessing() {
     if (!this.usePostprocessing) return;
 
-    //this.vignette2Pass = new WAGNER.Vignette2Pass();
+    // Load Pass
+    this.toonPass = new WAGNER.ToonPass();
+    this.invertPass = new WAGNER.InvertPass();
+    this.grayscalePass = new WAGNER.GrayscalePass();
   }
 
   resize(width, height) {
@@ -52,20 +58,36 @@ export default class Webgl {
     this.renderer.setSize(width, height);
   };
 
-  render(average, frequencys) {
-    if (this.usePostprocessing) {
-      //this.composer.reset();
-      //this.composer.renderer.clear();
-      // this.composer.render(this.scene, this.camera);
-      // this.composer.pass(this.vignette2Pass);
-      // this.composer.toScreen();
+  render(average, frequencys, treble, bass, medium) {
 
-      this.renderPass = new THREE.RenderPass( this.scene, this.camera );
-      this.mirrorPass = new THREE.ShaderPass( THREE.MirrorShader );
-      this.composer = new THREE.EffectComposer( this.renderer);
-      this.composer.addPass( this.renderPass );
-      this.composer.addPass( this.mirrorPass );
-      this.mirrorPass.renderToScreen = true;
+    if (this.usePostprocessing) {
+      this.composer.reset();
+      this.composer.renderer.clear();
+      this.composer.render(this.scene, this.camera);
+
+      if (this.toon) {
+        this.composer.pass(this.toonPass);
+      }
+      if (this.invert) {
+          this.composer.pass(this.invertPass);
+      }
+      if (this.grayscale) {
+        this.composer.pass(this.grayscalePass)
+      }
+      this.composer.toScreen();
+
+      if(treble > 30) {
+        this.invert = true;
+      } else {
+        this.invert = false;
+      }
+
+      if (bass > 200) {
+        this.grayscale = true;
+        console.log('up');
+      } else {
+        this.grayscale = false;
+      }
 
     } else {
       this.renderer.autoClear = false;
@@ -83,8 +105,7 @@ export default class Webgl {
     this.camera.position.y = Math.sin(angle - Math.PI/2) * radius;
     this.camera.rotation.z = angle;
 
-    this.tunnel.update(average, frequencys);
-
-    // console.log(average);
+    // Update tunnel with audio values
+    this.tunnel.update(average, frequencys, treble, bass, medium);
   }
 }

@@ -27,8 +27,8 @@ export default class Tunnel extends THREE.Object3D {
 
     var tube  = new THREE.Mesh( geometry, material );
     tube.rotation.x = Math.PI/2;
-    this.add(tube);
     tube.flipSided  = true;
+    this.add(tube);
 
     //Add light in the tube
     this.lightTop = new THREE.PointLight( 0x009589, 15, 25 );
@@ -37,7 +37,7 @@ export default class Tunnel extends THREE.Object3D {
 
     // Add light in the tube
     this.lightGlobal = new THREE.PointLight( 0x00796F, 20, 30 );
-    this.lightGlobal.position.set( 1, 3, 0 );
+    this.lightGlobal.position.set( 0, 3, 0 );
     this.add( this.lightGlobal );
 
     // Add light in the tube
@@ -47,15 +47,16 @@ export default class Tunnel extends THREE.Object3D {
 
   }
 
-  update(average, frequencys) {
+  update(average, frequencys, treble, bass, medium) {
     var maxIntensity = 35;
 
-    this.magicLight.intensity = 20;
+    this.magicLight.intensity = 0;
 
-    this.texture.offset.y  -= 0.006;
+    this.texture.offset.y  -= 0.005;
     this.texture.offset.y  %= 1;
     this.texture.needsUpdate = true;
 
+    // Modify intensity with average value
     if (average > maxIntensity) {
       this.lightTop.intensity = average /6;
       this.lightGlobal.intensity = average /6;
@@ -63,12 +64,8 @@ export default class Tunnel extends THREE.Object3D {
       this.lightTop.intensity = average/3;
       this.lightGlobal.intensity = average/3;
     }
-
     if (average > 80) {
-      this.lightTop.intensity = 50;
-      this.lightGlobal.intensity = 50;
+      this.magicLight.intensity = 10;
     }
-
-    //console.log(average);
   }
 }

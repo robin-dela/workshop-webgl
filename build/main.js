@@ -27,33 +27,35 @@ var Webgl = (function () {
 
     this.scene = new _three2['default'].Scene();
 
+    // Set up camera
     this.camera = new _three2['default'].PerspectiveCamera(100, width / height, 0.1, 10000);
     this.camera.position.set = (0, 0, 7);
     this.camera.lookAt(this.scene.position);
     this.scene.add(this.camera);
 
+    // Add fog in the end of the tunnel
     this.scene.fog = new _three2['default'].FogExp2(0x000000, 0.15);
 
     this.renderer = new _three2['default'].WebGLRenderer({ antialias: true, alpha: true });
     this.renderer.setSize(width, height);
     this.renderer.setClearColor(0x000000);
 
-    this.usePostprocessing = false;
-    //this.composer = new WAGNER.Composer(this.renderer);
-    //this.composer.setSize(width, height);
-    //this.initPostprocessing();
+    // Use post processing to look like toon
+    this.usePostprocessing = true;
+    this.toon = true;
+    this.invert = false;
+    this.grayscale = false;
+    this.composer = new WAGNER.Composer(this.renderer);
+    this.composer.setSize(width, height);
+    this.initPostprocessing();
 
+    // Load tunnel
     this.tunnel = new _objectsTunnel2['default']();
     this.tunnel.position.set(0, 0, 0);
     this.scene.add(this.tunnel);
 
-    this.dom = this.renderer.domElement;
-    this.controls = new _three2['default'].OrbitControls(this.camera, this.dom);
-
-    this.shaderTime = 0;
-    this.mirrorParams;
-    this.mirrorPass;
-    this.composer;
+    // this.dom = this.renderer.domElement;
+    // this.controls = new THREE.OrbitControls( this.camera, this.dom );
   }
 
   _createClass(Webgl, [{
@@ -61,7 +63,10 @@ var Webgl = (function () {
     value: function initPostprocessing() {
       if (!this.usePostprocessing) return;
 
-      //this.vignette2Pass = new WAGNER.Vignette2Pass();
+      // Load Pass
+      this.toonPass = new WAGNER.ToonPass();
+      this.invertPass = new WAGNER.InvertPass();
+      this.grayscalePass = new WAGNER.GrayscalePass();
     }
   }, {
     key: 'resize',
@@ -75,20 +80,36 @@ var Webgl = (function () {
     }
   }, {
     key: 'render',
-    value: function render(average, frequencys) {
-      if (this.usePostprocessing) {
-        //this.composer.reset();
-        //this.composer.renderer.clear();
-        // this.composer.render(this.scene, this.camera);
-        // this.composer.pass(this.vignette2Pass);
-        // this.composer.toScreen();
+    value: function render(average, frequencys, treble, bass, medium) {
 
-        this.renderPass = new _three2['default'].RenderPass(this.scene, this.camera);
-        this.mirrorPass = new _three2['default'].ShaderPass(_three2['default'].MirrorShader);
-        this.composer = new _three2['default'].EffectComposer(this.renderer);
-        this.composer.addPass(this.renderPass);
-        this.composer.addPass(this.mirrorPass);
-        this.mirrorPass.renderToScreen = true;
+      if (this.usePostprocessing) {
+        this.composer.reset();
+        this.composer.renderer.clear();
+        this.composer.render(this.scene, this.camera);
+
+        if (this.toon) {
+          this.composer.pass(this.toonPass);
+        }
+        if (this.invert) {
+          this.composer.pass(this.invertPass);
+        }
+        if (this.grayscale) {
+          this.composer.pass(this.grayscalePass);
+        }
+        this.composer.toScreen();
+
+        if (treble > 30) {
+          this.invert = true;
+        } else {
+          this.invert = false;
+        }
+
+        if (bass > 200) {
+          this.grayscale = true;
+          console.log('up');
+        } else {
+          this.grayscale = false;
+        }
       } else {
         this.renderer.autoClear = false;
         this.renderer.clear();
@@ -105,9 +126,8 @@ var Webgl = (function () {
       this.camera.position.y = Math.sin(angle - Math.PI / 2) * radius;
       this.camera.rotation.z = angle;
 
-      this.tunnel.update(average, frequencys);
-
-      // console.log(average);
+      // Update tunnel with audio values
+      this.tunnel.update(average, frequencys, treble, bass, medium);
     }
   }]);
 
@@ -145,6 +165,9 @@ var webgl = undefined,
     pathSound = 'app/sound/lean.mp3',
     frequencys = undefined,
     average = undefined,
+    treble = undefined,
+    bass = undefined,
+    medium = undefined,
     isLaunch = 0,
     soundStarted = 0,
     launcher = undefined,
@@ -158,27 +181,60 @@ var webgl = undefined,
     // GUI settings
     gui = new _datGui2['default'].GUI();
     gui.add(webgl, 'usePostprocessing');
+    gui.add(webgl, 'toon');
+    gui.add(webgl, 'invert');
+    gui.add(webgl, 'grayscale');
 
     // handle resize
     window.onresize = resizeHandler;
 
-    // let's play !
-    animate();
+    // Intro scene
+    var start = document.getElementById('start');
+    var title = document.getElementById('title');
+    start.onclick = startXp;
+
+    // Add konami code
+    var easter_egg = new Konami();
+    var wmp = document.getElementById('wmp');
+    easter_egg.code = function () {
+        $('.konami').addClass('show');
+    };
+    easter_egg.load();
+});
+
+function startXp() {
+    start.classList.add('fade');
+    title.classList.add('fade');
 
     setupAudioNodes();
     loadSound(pathSound);
-    //webgl.render(average, frequencys);
-});
+
+    // let's play !
+    animate();
+}
 
 function resizeHandler() {
     webgl.resize(window.innerWidth, window.innerHeight);
 }
 
 function animate() {
-    (0, _raf2['default'])(animate);
-    webgl.render(average, frequencys);
+    var test = (0, _raf2['default'])(animate);
+    var click = false;
+
+    // Play Pause in konami code / Don't work
+    // $('.play').on('click', function(){
+    //   if (!click) {
+    //     raf.cancel(test);
+    //     click = true;
+    //   } else {
+    //       raf(animate);
+    //       click = false;
+    //   }
+    // });
+    webgl.render(average, frequencys, treble, bass, medium);
 }
 
+// Get sound
 if (!window.AudioContext) {
     if (!window.webkitAudioContext) {
         alert('no audiocontext found');
@@ -221,11 +277,8 @@ function setupAudioNodes() {
     analyser.fftSize = 1024;
 
     sourceNode = context.createBufferSource();
-
     sourceNode.connect(analyser);
-
     analyser.connect(javascriptNode);
-
     sourceNode.connect(context.destination);
 
     javascriptNode.onaudioprocess = function () {
@@ -233,6 +286,11 @@ function setupAudioNodes() {
         analyser.getByteFrequencyData(array);
         average = getAverageVolume(array);
         frequencys = getByteFrequencyData(array);
+
+        splitFrenquencyArray(array);
+
+        $('#player').css('left', context.currentTime + 12 + 'px');
+        $('.progress').css('width', context.currentTime + 12 + 'px');
 
         if (average != 0) {
             soundStarted = 1;
@@ -245,6 +303,60 @@ function setupAudioNodes() {
     };
 }
 
+// Split sound array in a bass, medium and treble array
+function splitFrenquencyArray(array) {
+    var n = 3;
+    var tab = Object.keys(array).map(function (key) {
+        return array[key];
+    });
+    var len = tab.length,
+        frequencyArray = [],
+        i = 0;
+
+    while (i < len) {
+        var size = Math.ceil((len - i) / n--);
+        frequencyArray.push(tab.slice(i, i + size));
+        i += size;
+    }
+
+    // 0 = bass
+    // 1 = medium
+    // 2 = treble
+    getBass(frequencyArray[0]);
+    getMedium(frequencyArray[1]);
+    getTreble(frequencyArray[2]);
+}
+
+function getBass(array) {
+    var values = 0;
+    var length = array.length;
+    for (var i = 0; i < length; i++) {
+        values += array[i];
+    }
+    bass = values / length;
+    return bass;
+}
+
+function getMedium(array) {
+    var values = 0;
+    var length = array.length;
+    for (var i = 0; i < length; i++) {
+        values += array[i];
+    }
+    medium = values / length;
+    return medium;
+}
+
+function getTreble(array) {
+    var values = 0;
+    var length = array.length;
+    for (var i = 0; i < length; i++) {
+        values += array[i];
+    }
+    treble = values / length;
+    return treble;
+}
+
 function getByteFrequencyData(array) {
     var values = 0;
     var frequencys;
@@ -253,7 +365,6 @@ function getByteFrequencyData(array) {
     for (var i = 0; i < length; i++) {
         values += array[i];
     }
-
     frequencys = values / length;
     return frequencys;
 }
@@ -266,7 +377,6 @@ function getAverageVolume(array) {
     for (var i = 0; i < length; i++) {
         values += array[i];
     }
-
     average = values / length;
     return average;
 }
@@ -338,8 +448,8 @@ var Tunnel = (function (_THREE$Object3D) {
 
       var tube = new _three2['default'].Mesh(geometry, material);
       tube.rotation.x = Math.PI / 2;
-      this.add(tube);
       tube.flipSided = true;
+      this.add(tube);
 
       //Add light in the tube
       this.lightTop = new _three2['default'].PointLight(0x009589, 15, 25);
@@ -348,7 +458,7 @@ var Tunnel = (function (_THREE$Object3D) {
 
       // Add light in the tube
       this.lightGlobal = new _three2['default'].PointLight(0x00796F, 20, 30);
-      this.lightGlobal.position.set(1, 3, 0);
+      this.lightGlobal.position.set(0, 3, 0);
       this.add(this.lightGlobal);
 
       // Add light in the tube
@@ -358,15 +468,16 @@ var Tunnel = (function (_THREE$Object3D) {
     }
   }, {
     key: 'update',
-    value: function update(average, frequencys) {
+    value: function update(average, frequencys, treble, bass, medium) {
       var maxIntensity = 35;
 
-      this.magicLight.intensity = 20;
+      this.magicLight.intensity = 0;
 
-      this.texture.offset.y -= 0.006;
+      this.texture.offset.y -= 0.005;
       this.texture.offset.y %= 1;
       this.texture.needsUpdate = true;
 
+      // Modify intensity with average value
       if (average > maxIntensity) {
         this.lightTop.intensity = average / 6;
         this.lightGlobal.intensity = average / 6;
@@ -374,13 +485,9 @@ var Tunnel = (function (_THREE$Object3D) {
         this.lightTop.intensity = average / 3;
         this.lightGlobal.intensity = average / 3;
       }
-
       if (average > 80) {
-        this.lightTop.intensity = 50;
-        this.lightGlobal.intensity = 50;
+        this.magicLight.intensity = 10;
       }
-
-      //console.log(average);
     }
   }]);
 
