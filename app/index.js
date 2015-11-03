@@ -26,9 +26,9 @@ domready(() => {
   // GUI settings
   gui = new dat.GUI();
   gui.add(webgl, 'usePostprocessing');
-  gui.add(webgl, 'toon');
-  gui.add(webgl, 'invert');
-  gui.add(webgl, 'grayscale');
+  //gui.add(webgl, 'toon');
+  //gui.add(webgl, 'invert');
+  //gui.add(webgl, 'grayscale');
 
   // handle resize
   window.onresize = resizeHandler;
